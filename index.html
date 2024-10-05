@@ -1,13 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ton Sample TWA</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Posting App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .event-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .event-item {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+        #event-input {
+            width: 100%;
+            padding: 10px;
+        }
+        #submit-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #0088cc;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #submit-btn:hover {
+            background-color: #005f8c;
+        }
+    </style>
+</head>
+<body>
+    <div class="event-list" id="eventList"></div>
+
+    <input type="text" id="event-input" placeholder="Enter event details..." />
+    <button id="submit-btn">Post Event</button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        const eventListElement = document.getElementById("eventList");
+        const eventInput = document.getElementById("event-input");
+        const submitBtn = document.getElementById("submit-btn");
+
+        let events = [];
+
+        function renderEvents() {
+            eventListElement.innerHTML = "";
+            events.sort((a, b) => new Date(a.time) - new Date(b.time));  // Sort by event time
+            events.forEach(event => {
+                const div = document.createElement("div");
+                div.classList.add("event-item");
+                div.textContent = `${new Date(event.time).toLocaleString()} - ${event.text}`;
+                eventListElement.appendChild(div);
+            });
+        }
+
+        submitBtn.addEventListener("click", () => {
+            const eventText = eventInput.value;
+            if (eventText) {
+                const event = {
+                    text: eventText,
+                    time: new Date().toISOString()
+                };
+                events.push(event);
+                renderEvents();
+                eventInput.value = "";  // Clear input after adding
+            } else {
+                alert("Please enter event details");
+            }
+        });
+
+        // Initialize Telegram Web App features
+        tg.expand();
+    </script>
+</body>
 </html>
