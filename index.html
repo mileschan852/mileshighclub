@@ -1,15 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/mileshighclub/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ton Sample TWA</title>
-    <script type="module" crossorigin src="/mileshighclub/assets/index-f00ef643.js"></script>
-    <link rel="stylesheet" href="/mileshighclub/assets/index-b41033e1.css">
-  </head>
-  <body>
-    <div id="root"></div>
-    
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Event Posting App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .event-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .event-item {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+        .event-item a {
+            color: #0088cc;
+            text-decoration: none;
+        }
+        .event-item a:hover {
+            text-decoration: underline;
+        }
+        #event-input, #start-time, #end-time, #district {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .checkbox-group {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        #submit-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #0088cc;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #submit-btn:hover {
+            background-color: #005f8c;
+        }
+    </style>
+</head>
+<body>
+    <div class="event-list" id="eventList"></div>
+
+    <!-- User Name -->
+    <input type="text" id="username" placeholder="Enter your name..." />
+
+    <!-- Event Details -->
+    <input type="text" id="event-input" placeholder="Enter event details..." />
+    <input type="datetime-local" id="start-time" placeholder="Event start time..." />
+    <input type="datetime-local" id="end-time" placeholder="Event end time..." />
+    <input type="text" id="district" placeholder="Enter district..." />
+
+    <!-- Checkboxes -->
+    <div class="checkbox-group">
+        <label><input type="checkbox" id="bb" /> BB</label>
+        <label><input type="checkbox" id="cf" /> CF</label>
+        <label><input type="checkbox" id="group" /> Group</label>
+    </div>
+
+    <!-- Submit Button -->
+    <button id="submit-btn">Post Event</button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        const eventListElement = document.getElementById("eventList");
+        const eventInput = document.getElementById("event-input");
+        const startTimeInput = document.getElementById("start-time");
+        const endTimeInput = document.getElementById("end-time");
+        const districtInput = document.getElementById("district");
+        const usernameInput = document.getElementById("username");
+        const submitBtn = document.getElementById("submit-btn");
+        const bbCheckbox = document.getElementById("bb");
+        const cfCheckbox = document.getElementById("cf");
+        const groupCheckbox = document.getElementById("group");
+
+        let events = [];
+
+        function renderEvents() {
+            eventListElement.innerHTML = "";
+            events.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));  // Sort by event start time
+            events.forEach(event => {
+                const div = document.createElement("div");
+                div.classList.add("event-item");
+
+                // Create clickable user name link
+                const userLink = document.createElement("a");
+                userLink.href = `https://t.me/${event.username}`;  // Open private chat on Telegram
+                userLink.textContent = event.username;
+                userLink.target = "_blank";
+
+                // Add event details
+                div.innerHTML = `
+                    <div><strong>Event:</strong> ${event.text}</div>
+                    <div><strong>Start:</strong> ${new Date(event.startTime).toLocaleString()}</div>
+                    <div><strong>End:</strong> ${new Date(event.endTime).toLocaleString()}</div>
+                    <div><strong>District:</strong> ${event.district}</div>
+                    <div><strong>Tags:</strong> ${event.bb ? 'BB ' : ''}${event.cf ? 'CF ' : ''}${event.group ? 'Group' : ''}</div>
+                `;
+
+                // Append username link to the event item
+                div.appendChild(userLink);
+                eventListElement.appendChild(div);
+            });
+        }
+
+        submitBtn.addEventListener("click", () => {
+            const eventText = eventInput.value;
+            const startTime = startTimeInput.value;
+            const endTime = endTimeInput.value;
+            const district = districtInput.value;
+            const username = usernameInput.value;
+
+            // Form validation
+            if (!eventText || !startTime || !endTime || !district || !username) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            const event = {
+                text: eventText,
+                startTime: new Date(startTime).toISOString(),
+                endTime: new Date(endTime).toISOString(),
+                district: district,
+                username: username,
+                bb: bbCheckbox.checked,
+                cf: cfCheckbox.checked,
+                group: groupCheckbox.checked
+            };
+
+            events.push(event);
+            renderEvents();
+
+            // Clear inputs after adding event
+            eventInput.value = "";
+            startTimeInput.value = "";
+            endTimeInput.value = "";
+            districtInput.value = "";
+            usernameInput.value = "";
+            bbCheckbox.checked = false;
+            cfCheckbox.checked = false;
+            groupCheckbox.checked = false;
+        });
+
+        // Initialize Telegram Web App features
+        tg.expand();
+    </script>
+</body>
 </html>
