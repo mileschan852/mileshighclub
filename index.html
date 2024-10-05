@@ -70,7 +70,6 @@
     <button id="submit-btn">Post Event</button>
 
     <script>
-        const tg = window.Telegram.WebApp;
         const eventListElement = document.getElementById("eventList");
         const eventInput = document.getElementById("event-input");
         const startTimeInput = document.getElementById("start-time");
@@ -82,7 +81,36 @@
         const cfCheckbox = document.getElementById("cf");
         const groupCheckbox = document.getElementById("group");
 
-        let events = [];
+        const STORAGE_KEY = 'eventsData';
+        const DAY_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+        // Load events from LocalStorage
+        function loadEvents() {
+            const storedData = localStorage.getItem(STORAGE_KEY);
+            if (storedData) {
+                const data = JSON.parse(storedData);
+                const now = new Date();
+
+                // Filter out old events (older than 24 hours)
+                const filteredEvents = data.filter(event => {
+                    const eventTime = new Date(event.createdAt);
+                    return now - eventTime < DAY_MS;
+                });
+
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredEvents));  // Update storage
+
+                return filteredEvents;
+            }
+            return [];
+        }
+
+        // Save events to LocalStorage
+        function saveEvents(events) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+        }
+
+        let events = loadEvents();  // Load existing events from local storage
+        renderEvents();
 
         function renderEvents() {
             eventListElement.innerHTML = "";
@@ -133,10 +161,12 @@
                 username: username,
                 bb: bbCheckbox.checked,
                 cf: cfCheckbox.checked,
-                group: groupCheckbox.checked
+                group: groupCheckbox.checked,
+                createdAt: new Date().toISOString()  // Store creation time for expiration check
             };
 
             events.push(event);
+            saveEvents(events);  // Save updated events to LocalStorage
             renderEvents();
 
             // Clear inputs after adding event
@@ -149,9 +179,6 @@
             cfCheckbox.checked = false;
             groupCheckbox.checked = false;
         });
-
-        // Initialize Telegram Web App features
-        tg.expand();
     </script>
 </body>
 </html>
