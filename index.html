@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enhanced Event Posting App</title>
-    <style>
+    <style id="theme-style">
+        /* Default styling for light mode (overwritten if dark theme is detected) */
         body {
             font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            color: #000000;
         }
         .event-list {
             max-height: 400px;
@@ -28,6 +31,9 @@
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
+            background-color: #ffffff;
+            color: #000000;
+            border: 1px solid #ccc;
         }
         .checkbox-group {
             display: flex;
@@ -40,145 +46,3 @@
             background-color: #0088cc;
             color: white;
             border: none;
-            cursor: pointer;
-        }
-        #submit-btn:hover {
-            background-color: #005f8c;
-        }
-    </style>
-</head>
-<body>
-    <div class="event-list" id="eventList"></div>
-
-    <!-- User Name -->
-    <input type="text" id="username" placeholder="Enter your name..." />
-
-    <!-- Event Details -->
-    <input type="text" id="event-input" placeholder="Enter event details..." />
-    <input type="datetime-local" id="start-time" placeholder="Event start time..." />
-    <input type="datetime-local" id="end-time" placeholder="Event end time..." />
-    <input type="text" id="district" placeholder="Enter district..." />
-
-    <!-- Checkboxes -->
-    <div class="checkbox-group">
-        <label><input type="checkbox" id="bb" /> BB</label>
-        <label><input type="checkbox" id="cf" /> CF</label>
-        <label><input type="checkbox" id="group" /> Group</label>
-    </div>
-
-    <!-- Submit Button -->
-    <button id="submit-btn">Post Event</button>
-
-    <script>
-        const eventListElement = document.getElementById("eventList");
-        const eventInput = document.getElementById("event-input");
-        const startTimeInput = document.getElementById("start-time");
-        const endTimeInput = document.getElementById("end-time");
-        const districtInput = document.getElementById("district");
-        const usernameInput = document.getElementById("username");
-        const submitBtn = document.getElementById("submit-btn");
-        const bbCheckbox = document.getElementById("bb");
-        const cfCheckbox = document.getElementById("cf");
-        const groupCheckbox = document.getElementById("group");
-
-        const STORAGE_KEY = 'eventsData';
-        const DAY_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-
-        // Load events from LocalStorage
-        function loadEvents() {
-            const storedData = localStorage.getItem(STORAGE_KEY);
-            if (storedData) {
-                const data = JSON.parse(storedData);
-                const now = new Date();
-
-                // Filter out old events (older than 24 hours)
-                const filteredEvents = data.filter(event => {
-                    const eventTime = new Date(event.createdAt);
-                    return now - eventTime < DAY_MS;
-                });
-
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredEvents));  // Update storage
-
-                return filteredEvents;
-            }
-            return [];
-        }
-
-        // Save events to LocalStorage
-        function saveEvents(events) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
-        }
-
-        let events = loadEvents();  // Load existing events from local storage
-        renderEvents();
-
-        function renderEvents() {
-            eventListElement.innerHTML = "";
-            events.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));  // Sort by event start time
-            events.forEach(event => {
-                const div = document.createElement("div");
-                div.classList.add("event-item");
-
-                // Create clickable user name link
-                const userLink = document.createElement("a");
-                userLink.href = `https://t.me/${event.username}`;  // Open private chat on Telegram
-                userLink.textContent = event.username;
-                userLink.target = "_blank";
-
-                // Add event details
-                div.innerHTML = `
-                    <div><strong>Event:</strong> ${event.text}</div>
-                    <div><strong>Start:</strong> ${new Date(event.startTime).toLocaleString()}</div>
-                    <div><strong>End:</strong> ${new Date(event.endTime).toLocaleString()}</div>
-                    <div><strong>District:</strong> ${event.district}</div>
-                    <div><strong>Tags:</strong> ${event.bb ? 'BB ' : ''}${event.cf ? 'CF ' : ''}${event.group ? 'Group' : ''}</div>
-                `;
-
-                // Append username link to the event item
-                div.appendChild(userLink);
-                eventListElement.appendChild(div);
-            });
-        }
-
-        submitBtn.addEventListener("click", () => {
-            const eventText = eventInput.value;
-            const startTime = startTimeInput.value;
-            const endTime = endTimeInput.value;
-            const district = districtInput.value;
-            const username = usernameInput.value;
-
-            // Form validation
-            if (!eventText || !startTime || !endTime || !district || !username) {
-                alert("Please fill in all fields.");
-                return;
-            }
-
-            const event = {
-                text: eventText,
-                startTime: new Date(startTime).toISOString(),
-                endTime: new Date(endTime).toISOString(),
-                district: district,
-                username: username,
-                bb: bbCheckbox.checked,
-                cf: cfCheckbox.checked,
-                group: groupCheckbox.checked,
-                createdAt: new Date().toISOString()  // Store creation time for expiration check
-            };
-
-            events.push(event);
-            saveEvents(events);  // Save updated events to LocalStorage
-            renderEvents();
-
-            // Clear inputs after adding event
-            eventInput.value = "";
-            startTimeInput.value = "";
-            endTimeInput.value = "";
-            districtInput.value = "";
-            usernameInput.value = "";
-            bbCheckbox.checked = false;
-            cfCheckbox.checked = false;
-            groupCheckbox.checked = false;
-        });
-    </script>
-</body>
-</html>
